@@ -843,6 +843,7 @@ extern int cf_max_db_connections;
 extern int cf_max_db_client_connections;
 extern int cf_max_user_connections;
 extern int cf_max_user_client_connections;
+extern int cf_max_waiting_clients;
 
 extern char *cf_autodb_connstr;
 extern usec_t cf_autodb_idle_timeout;

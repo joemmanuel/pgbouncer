@@ -272,6 +272,7 @@ void change_client_state(PgSocket *client, SocketState newstate)
 	case CL_WAITING:
 	case CL_WAITING_LOGIN:
 		client->wait_start = get_cached_time();
+		client_
 		statlist_append(&pool->waiting_client_list, &client->head);
 		break;
 	case CL_ACTIVE:
@@ -801,6 +802,10 @@ PgPool *get_peer_pool(PgDatabase *db)
 	return db->pool;
 }
 
+static int pool_max_waiting_clients() {
+	return cf_max_waiting_clients; // need to resolve config
+}
+
 /* deactivate socket and put into wait queue */
 static void pause_client(PgSocket *client)
 {
@@ -811,6 +816,14 @@ static void pause_client(PgSocket *client)
 		disconnect_client(client, true, "server shutting down");
 		return;
 	}
+
+	if(pool_max_waiting_clients() > 0 /* max enabled*/ 
+		&& statlist_count(&client->pool->waiting_client_list) >= pool_max_waiting_clients()) {
+			
+		disconnect_client(client, true, "max waiting clients exceeded");
+		return;
+	} 
+
 	change_client_state(client, CL_WAITING);
 	if (!sbuf_pause(&client->sbuf))
 		disconnect_client(client, true, "pause failed");
